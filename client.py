@@ -5,6 +5,7 @@ import base64
 import os
 import random
 import struct
+import json
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -63,7 +64,18 @@ def hash_file(plaintext):
     hasher.update(plaintext)
     file_hash = hasher.finalize()
     return file_hash
-    
+
+def get_message(conn):
+    data = conn.recv(4)
+    msg_len = struct.unpack("I", data)[0]
+    #print("message len: " + str(msg_len))
+    msg = b""
+    while(len(msg) < msg_len):
+        msg = msg + conn.recv(1)
+        
+    #print("message: " + str(msg))
+    return msg
+
 # Open socket       
 s = socket.socket(socket.AF_INET)    
 
@@ -114,12 +126,59 @@ while True:
             
     elif command[0] == "get":
 		#save/overwrite file+hash from FTP server
-        pass
+        filename = command[1]
+        
+        # Send Command
+        s.send(struct.pack("I", len(command[0])))
+        s.send(command[0].encode('ascii'))
+        
+        # Send filename
+        s.send(struct.pack("I", len(filename)))
+        s.send(filename.encode('ascii'))
+        
+        has_file = int.from_bytes(get_message(s), byteorder='big')
+        if has_file == 1:
+            # Receive filename
+            filename = get_message(s).decode('ascii')
+            # Receive file
+            data = get_message(s)
+            
+            has_hash = int.from_bytes(get_message(s), byteorder='big')
+            if has_hash == 1:
+                # Receive hash
+                server_digest = get_message(s)
+                # Run local hash
+                digest = hash_file(data)
+                # Verify file integrity
+                if server_digest == digest:
+                    fout = open(filename, 'wb')
+                    fout.write(data)
+                    fout.close()
+                else:
+                    print("Hash does not match!\nFile not saved.")
+            else:
+                print("No hash available.\nFile not saved.")
+        else:
+            print("File unavailable on server")
+        
     elif command[0] == "ls":
 		#send request for directory listing
+        s.send(struct.pack("I", len(command[0])))
+        s.send(command[0].encode('ascii'))
+
+        # receive directory listing
+        j_ls = get_message(s).decode('ascii')
+        ls = json.loads(j_ls)
+        
 		#print listing
-        pass
+        for item in ls:
+            print(item)
+        
     elif command[0] == "exit":
+        # Send Command
+        s.send(struct.pack("I", len(command[0])))
+        s.send(command[0].encode('ascii'))
+        
 		#close all files/sockets
         s.shutdown(socket.SHUT_WR)
         print("Disconnected from server at: " + str(server_addr))
