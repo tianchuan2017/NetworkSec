@@ -4,6 +4,7 @@ import re
 import base64
 import os
 import random
+import struct
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -31,7 +32,6 @@ def get_server_addr():
             break
         except Exception as err:
             print("Invaid Port Number: " + str(err))
-            sys.exit()
 
     # Create a server address tuple
     server_addr = (server_ip, server_port)
@@ -48,6 +48,22 @@ def connect_to_server(s, server_addr):
 		print("Error connecting to server: " + str(err))
 		return False
     
+def is_valid_file(filename):
+    if "/" in filename or "\\" in filename:
+        print("Error: Filename cannot be a path")
+        return False
+    elif not os.path.isfile(filename):
+        print("Error: " + filename + " does not exist")
+        return False
+    else:
+        return True
+    
+def hash_file(plaintext):
+    hasher = hashes.Hash(hashes.SHA256(), backend=default_backend())
+    hasher.update(plaintext)
+    file_hash = hasher.finalize()
+    return file_hash
+    
 # Open socket       
 s = socket.socket(socket.AF_INET)    
 
@@ -60,54 +76,54 @@ while True:
 # At this point, we are connected to a server
 while True:
     # Enter command
-	command = input("ftp>")
-	if command is "put":
-		#send file and hash to FTP server
-		pass
-	elif command is "get":
+    command = input("ftp>").split()
+    print(command)
+    print(command[0])
+    
+    if command[0] == "put":
+        #send file and hash to FTP server
+        
+        #is the file valid?
+        filename = command[1]
+        if is_valid_file(filename):
+            fp = open(filename, "rb")
+            
+            # Load file
+            plaintext = fp.read()
+            p_len = len(plaintext)
+            fp.close()
+            
+            # Generate Hash
+            digest = hash_file(plaintext)
+            
+            # Send Command
+            s.send(struct.pack("I", len(command[0])))
+            s.send(command[0].encode('ascii'))
+
+            # Send Hash
+            s.send(struct.pack("I", len(digest)))
+            s.send(digest)
+            
+            # Send filename
+            s.send(struct.pack("I", len(filename)))
+            s.send(filename.encode('ascii'))
+            
+            # Send file
+            s.send(struct.pack("I", p_len))
+            s.send(plaintext)
+            
+    elif command[0] == "get":
 		#save/overwrite file+hash from FTP server
-		pass
-	elif command is "ls":
+        pass
+    elif command[0] == "ls":
 		#send request for directory listing
 		#print listing
-		pass
-	elif command is "exit":
+        pass
+    elif command[0] == "exit":
 		#close all files/sockets
-		sys.exit()
-	else:
-		print("Error: invalid command\nAvailable commands are: put, get, ls, exit")
-
-# # Open file
-# try:
-#     fp = open(sys.argv[2], "rb")
-# except Exception as err:
-#     print("Invalid file: " + str(err))
-#     sys.exit()
-
-
-
-# # Load file
-# plaintext = fp.read()
-# p_len = len(plaintext)
-
-# # Hash file using SHA-256
-# hasher = hashes.Hash(hashes.SHA256(), backend=default_backend())
-# hasher.update(plaintext)
-# file_hash = hasher.finalize()
-
-
-    
-#     # Send signed hash, plaintext length, and plaintext
-#     s.send(signed_hash)
-#     s.send(bytes(str(p_len), 'ascii'))
-#     s.send(plaintext)
-
-#     # Start graceful shutdown of connection
-#     s.shutdown(socket.SHUT_WR)
-#     print("Disconnected from server at: " + str(server_addr))
-
-
-# # Close files and socket
-# fp.close()
-# key_file.close()
-# s.close()
+        s.shutdown(socket.SHUT_WR)
+        print("Disconnected from server at: " + str(server_addr))
+        s.close()
+        sys.exit()
+    else:
+        print("Error: invalid command\nAvailable commands are: put, get, ls, exit")
