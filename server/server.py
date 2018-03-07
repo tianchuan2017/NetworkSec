@@ -7,6 +7,7 @@ import importlib
 # importlib.import_module('ftp')
 # importlib.import_module('ids')
 from ftp import ftp
+from ids import IDS
 
 def get_server_addr():
 
@@ -32,6 +33,8 @@ def get_server_addr():
 
 class ServerConnection():
 
+    message_len = 1024  # TODO: figure out exactly what this value should be
+
     def __init__(self):
         # Get server address
         server_addr = get_server_addr()
@@ -54,6 +57,8 @@ class ServerConnection():
             sys.exit()
 
     def send(self, bytes):
+        # TODO make the send fixed length
+
         return self.conn.send(bytes)
 
     def get_message(self):
@@ -64,11 +69,21 @@ class ServerConnection():
         while (len(msg) < msg_len):
             msg = msg + self.conn.recv(1)
 
-        # print("message: " + str(msg))
-        return msg
+        # Have the IDS inspect the message
+        if ids.inspect_message(msg):
+            # An intrusion was detecteed
+            print('Intrusion!')
+            sys.exit(1)  # TODO Handle an intrusion
 
+        else:
+            return msg
 
-print("FTP Client Starting...")
+print('Starting Intrusion Detection System')
+
+# Initialize an IDS
+ids = IDS()
+
+print("FTP Server Starting...")
 
 # Initialize a socket connection
 conn = ServerConnection()

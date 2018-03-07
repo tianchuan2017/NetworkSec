@@ -14,6 +14,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
+
 def is_valid_file(filename):
     if "/" in filename or "\\" in filename:
         print("Error: Filename cannot be a path")
@@ -24,7 +25,13 @@ def is_valid_file(filename):
     else:
         return True
 
+
 def ftp(command, conn):
+    """
+    :param command: The command {put, get, ls, exit) to execute.
+    :param conn: The ServerConnection
+    :return should_exit: bool that tells the server whether to exit
+    """
 
     # Flag that determines if the server should exit when done
     should_exit = False
@@ -51,7 +58,6 @@ def ftp(command, conn):
 
         print("Plaintext written to: " + filename)
         print("Hash written to: " + filename + ".hash")
-
 
     elif command == b"get":
         # send file/hash to client
@@ -123,7 +129,7 @@ def ftp(command, conn):
         conn.send(j_ls)
 
     elif command == b"exit":
-        # Tell the encapuslating server to exit
+        # Flag the encapsulating server to exit
         should_exit = True
 
     else:
