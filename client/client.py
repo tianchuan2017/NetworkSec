@@ -71,7 +71,6 @@ def hash_file(plaintext):
     return file_hash
 
 def get_message(conn):
-    
     # Initialize expected index
     expected_idx = 0
     
@@ -114,7 +113,6 @@ def get_message(conn):
     return msg
 
 def send_message(conn, msg):
-    
     msg_len = len(msg)
     packet_num = math.ceil(msg_len / message_len)
     
@@ -157,67 +155,72 @@ while True:
     command = input("ftp>").split()
     
     if command[0] == "put":
-        #send file and hash to FTP server
-        
-        #is the file valid?
-        filename = command[1]
-        if is_valid_file(filename):
-            fp = open(filename, "rb")
+        #send file and hash to FTP server        
+        if len(command) == 2:
+            #is the file valid?
+            filename = command[1]
+            if is_valid_file(filename):
+                fp = open(filename, "rb")
+                
+                # Load file
+                plaintext = fp.read()
+                p_len = len(plaintext)
+                fp.close()
+                
+                # Generate Hash
+                digest = hash_file(plaintext)
+                
+                # Send Command
+                send_message(s, command[0].encode('ascii'))
+
+                # Send Hash
+                send_message(s, digest)
+                
+                # Send filename
+                send_message(s, filename.encode('ascii'))
+                
+                # Send file
+                send_message(s, plaintext)
+        else:
+            print("Error: Incomplete Command\nput [filename]")
             
-            # Load file
-            plaintext = fp.read()
-            p_len = len(plaintext)
-            fp.close()
-            
-            # Generate Hash
-            digest = hash_file(plaintext)
+    elif command[0] == "get":
+        if len(command) == 2:
+            #save/overwrite file+hash from FTP server
+            filename = command[1]
             
             # Send Command
             send_message(s, command[0].encode('ascii'))
-
-            # Send Hash
-            send_message(s, digest)
             
             # Send filename
             send_message(s, filename.encode('ascii'))
             
-            # Send file
-            send_message(s, plaintext)
-            
-    elif command[0] == "get":
-		#save/overwrite file+hash from FTP server
-        filename = command[1]
-        
-        # Send Command
-        send_message(s, command[0].encode('ascii'))
-        
-        # Send filename
-        send_message(s, filename.encode('ascii'))
-        
-        has_file = int.from_bytes(get_message(s), byteorder='big')
-        if has_file == 1:
-            # Receive filename
-            filename = get_message(s).decode('ascii')
-            # Receive file
-            data = get_message(s)
-            
-            has_hash = int.from_bytes(get_message(s), byteorder='big')
-            if has_hash == 1:
-                # Receive hash
-                server_digest = get_message(s)
-                # Run local hash
-                digest = hash_file(data)
-                # Verify file integrity
-                if server_digest == digest:
-                    fout = open(filename, 'wb')
-                    fout.write(data)
-                    fout.close()
+            has_file = int.from_bytes(get_message(s), byteorder='big')
+            if has_file == 1:
+                # Receive filename
+                filename = get_message(s).decode('ascii')
+                # Receive file
+                data = get_message(s)
+                
+                has_hash = int.from_bytes(get_message(s), byteorder='big')
+                if has_hash == 1:
+                    # Receive hash
+                    server_digest = get_message(s)
+                    # Run local hash
+                    digest = hash_file(data)
+                    # Verify file integrity
+                    if server_digest == digest:
+                        fout = open(filename, 'wb')
+                        fout.write(data)
+                        fout.close()
+                    else:
+                        print("Hash does not match!\nFile not saved.")
                 else:
-                    print("Hash does not match!\nFile not saved.")
+                    print("No hash available.\nFile not saved.")
             else:
-                print("No hash available.\nFile not saved.")
+                print("File unavailable on server")
         else:
-            print("File unavailable on server")
+            print("Error: Incomplete command.\nget [filename]")
         
     elif command[0] == "ls":
 		#send request for directory listing
