@@ -71,8 +71,7 @@ def ftp(command, conn):
             has_file = 1
 
             # Let the client know the file is available
-            conn.send(struct.pack("I", 1))
-            conn.send(bytes([has_file]))
+            conn.send_message(bytes([has_file]))
 
             # Open and load the file
             fp = open(filename, "rb")
@@ -80,16 +79,16 @@ def ftp(command, conn):
             fp.close()
 
             # Send filename
-            conn.send(struct.pack("I", len(filename)))
-            conn.send(filename.encode('ascii'))
+            conn.send_message(filename.encode('ascii'))
 
             # Send file
-            conn.send(struct.pack("I", len(plaintext)))
-            conn.send(plaintext)
+            conn.send_message(plaintext)
             print("Sent file: " + filename)
 
             # Check is hash is available
+            has_hash = 0
             if is_valid_file(filename + ".hash"):
+                has_hash = 1
                 fp = open((filename + ".hash"), "rb")
                 digest_token = fp.read()
                 fp.close()
@@ -104,20 +103,17 @@ def ftp(command, conn):
                     has_hash = 0
 
             # Send has_hash
-            conn.send(struct.pack("I", 1))
-            conn.send(bytes([has_hash]))
+            conn.send_message(bytes([has_hash]))
 
             if has_hash == 1:
                 # Send hash
-                conn.send(struct.pack("I", len(digest)))
-                conn.send(digest)
+                conn.send_message(digest)
                 print("Sent hash: " + (filename + ".hash"))
             else:
                 print("No hash sent")
         else:
             # Let the client know the file is unavailable
-            conn.send(struct.pack("I", 1))
-            conn.send(bytes([has_file]))
+            conn.send_message(bytes([has_file]))
 
     elif command == b"ls":
         # retreive directory listing
@@ -125,8 +121,7 @@ def ftp(command, conn):
         j_ls = json.dumps(ls).encode('ascii')
 
         # send listing to client
-        conn.send(struct.pack("I", len(j_ls)))
-        conn.send(j_ls)
+        conn.send_message(j_ls)
 
     elif command == b"exit":
         # Flag the encapsulating server to exit

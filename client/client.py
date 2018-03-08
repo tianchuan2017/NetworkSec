@@ -6,6 +6,7 @@ import os
 import random
 import struct
 import json
+import math
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -13,6 +14,10 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+
+message_len = 32  # TODO: figure out exactly what this value should be
+header_len = 8
+packet_len = message_len + header_len
 
 print("FTP Client Starting...")
 
@@ -66,18 +71,79 @@ def hash_file(plaintext):
     return file_hash
 
 def get_message(conn):
-    data = conn.recv(4)
-    msg_len = struct.unpack("I", data)[0]
-    #print("message len: " + str(msg_len))
-    msg = b""
-    while(len(msg) < msg_len):
-        msg = msg + conn.recv(1)
+    
+    # Initialize expected index
+    expected_idx = 0
+    
+    # Initialize empty message
+    msg = b''
+    
+    while True:
+        # Receive packet containing size information
+        recv_buf = conn.recv(packet_len)
+
+        # Build header
+        header = recv_buf[0:header_len]
+        byte_idx = struct.unpack(">II", header)[0]
+        msg_len = struct.unpack(">II", header)[1]
         
-    #print("message: " + str(msg))
+        # If we receive a packet with an expected byte index
+        if byte_idx == expected_idx:
+            
+            # Determine portion of packet that contains message
+            start_idx = header_len
+            end_idx = start_idx + message_len
+            if(byte_idx + message_len > msg_len):
+                end_idx = msg_len - byte_idx + header_len
+            
+            # Append buffer to message
+            msg = msg + recv_buf[start_idx: end_idx]
+            
+            # Exit loop if we have collected the entire message
+            if len(msg) == msg_len:
+                break
+               
+            # Increment expected index
+            expected_idx = byte_idx + message_len
+
+        else:
+            # Error, a packet was dropped
+            print('Packet Dropped. Exiting...')
+            sys.exit(1) #TODO Handle a dropped packet
+            
     return msg
 
+def send_message(conn, msg):
+    
+    msg_len = len(msg)
+    packet_num = math.ceil(msg_len / message_len)
+    
+    # Section data into buffer and send
+    for x in range(0, packet_num):
+        # Set start/end indicies of message to copy to buffer
+        start_idx = x*message_len
+        end_idx = start_idx + message_len
+        if(end_idx > msg_len):
+            end_idx = msg_len
+        
+        # Create an empty packet
+        packet = bytearray(packet_len)
+        
+        # Insert Header
+        # Contains byte sequence number and total message length
+        header = struct.pack(">II", start_idx, msg_len)
+        packet[0:header_len] = header
+            
+        # Copy portion of message to buffer
+        data = msg[start_idx: end_idx]
+        packet[header_len:header_len + len(data)] = data
+        
+        # Send packet
+        conn.send(packet)
+
 # Open socket       
-s = socket.socket(socket.AF_INET)    
+s = socket.socket(socket.AF_INET) 
+s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)   
 
 # Try to connect to the specified address
 while True:
@@ -89,8 +155,6 @@ while True:
 while True:
     # Enter command
     command = input("ftp>").split()
-    print(command)
-    print(command[0])
     
     if command[0] == "put":
         #send file and hash to FTP server
@@ -109,32 +173,26 @@ while True:
             digest = hash_file(plaintext)
             
             # Send Command
-            s.send(struct.pack("I", len(command[0])))
-            s.send(command[0].encode('ascii'))
+            send_message(s, command[0].encode('ascii'))
 
             # Send Hash
-            s.send(struct.pack("I", len(digest)))
-            s.send(digest)
+            send_message(s, digest)
             
             # Send filename
-            s.send(struct.pack("I", len(filename)))
-            s.send(filename.encode('ascii'))
+            send_message(s, filename.encode('ascii'))
             
             # Send file
-            s.send(struct.pack("I", p_len))
-            s.send(plaintext)
+            send_message(s, plaintext)
             
     elif command[0] == "get":
 		#save/overwrite file+hash from FTP server
         filename = command[1]
         
         # Send Command
-        s.send(struct.pack("I", len(command[0])))
-        s.send(command[0].encode('ascii'))
+        send_message(s, command[0].encode('ascii'))
         
         # Send filename
-        s.send(struct.pack("I", len(filename)))
-        s.send(filename.encode('ascii'))
+        send_message(s, filename.encode('ascii'))
         
         has_file = int.from_bytes(get_message(s), byteorder='big')
         if has_file == 1:
@@ -163,8 +221,7 @@ while True:
         
     elif command[0] == "ls":
 		#send request for directory listing
-        s.send(struct.pack("I", len(command[0])))
-        s.send(command[0].encode('ascii'))
+        send_message(s, command[0].encode('ascii'))
 
         # receive directory listing
         j_ls = get_message(s).decode('ascii')
@@ -176,8 +233,7 @@ while True:
         
     elif command[0] == "exit":
         # Send Command
-        s.send(struct.pack("I", len(command[0])))
-        s.send(command[0].encode('ascii'))
+        send_message(s, command[0].encode('ascii'))
         
 		#close all files/sockets
         s.shutdown(socket.SHUT_WR)
