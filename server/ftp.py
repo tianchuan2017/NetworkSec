@@ -86,7 +86,9 @@ def ftp(command, conn):
             print("Sent file: " + filename)
 
             # Check is hash is available
+            has_hash = 0
             if is_valid_file(filename + ".hash"):
+                has_hash = 1
                 fp = open((filename + ".hash"), "rb")
                 digest_token = fp.read()
                 fp.close()
