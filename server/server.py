@@ -2,6 +2,7 @@ import sys
 import socket
 import struct
 import math
+import os
 
 # Import the ftp and ids modules
 from ftp import ftp
@@ -144,6 +145,9 @@ print('Starting Intrusion Detection System')
 
 # Initialize an IDS
 ids = IDS()
+
+# Change to the files/ directory, where all files will be stored
+os.chdir('files/')
 
 print("FTP Server Starting...")
 
