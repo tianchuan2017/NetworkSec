@@ -1,19 +1,5 @@
-import sys
-import socket
-import re
-import base64
 import os
-import random
-import struct
 import json
-from cryptography.fernet import Fernet
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import padding
-
 
 def is_valid_file(filename):
     if "/" in filename or "\\" in filename:

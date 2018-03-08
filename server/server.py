@@ -2,11 +2,8 @@ import sys
 import socket
 import struct
 import math
-import importlib
 
 # Import the ftp and ids modules
-# importlib.import_module('ftp')
-# importlib.import_module('ids')
 from ftp import ftp
 from ids import IDS
 
@@ -24,7 +21,7 @@ def get_server_addr():
             server_port = int(input("Please enter the port number of this FTP Server: "))
             break
         except Exception as err:
-            print("Error: Invaid Port Number: " + str(err))
+            print("Error: Invalid Port Number: " + str(err))
 
     # Create a server address tuple
     server_addr = (server_ip, server_port)

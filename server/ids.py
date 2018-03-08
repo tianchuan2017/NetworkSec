@@ -11,6 +11,7 @@ class IDS:
         self.patterns = self.load_patterns()
 
         cmd = 'a'
+
         while cmd != '':
             cmd = input(
                 'Type \'a\' to add a new pattern, \'v\' to view the current patterns, or press <enter> to proceed: ')
@@ -21,9 +22,13 @@ class IDS:
                 pattern_id = input('Enter pattern id (int or str): ')
 
                 try:
-                    byte_pattern = bytes.fromhex(input('Enter pattern in hex: (ex. efa7e779...): '))
+                    byte_pattern = bytes.fromhex(input('Enter pattern in hex: (ex. efefefef...): '))
                 except ValueError:
                     sys.stderr.write('Bad input. Are you sure you entered valid hex?\n')
+                    continue
+
+                if len(byte_pattern) > 32:
+                    sys.stderr.write('Bad input. Patterns must be less than 32 bytes long.')
                     continue
 
                 # Add and save the pattern
@@ -42,7 +47,7 @@ class IDS:
         # Check if each pattern is in the message
         for pattern_id, pattern in self.patterns.items():
             if pattern in message:
-                print('!!!INTRUSION DETECTED!!!')
+                print('!!!INTRUSION!!!')
                 return True  # TODO Implement log
 
         return False

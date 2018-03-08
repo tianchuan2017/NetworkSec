@@ -1,19 +1,11 @@
 import sys
 import socket
-import re
-import base64
 import os
-import random
 import struct
 import json
 import math
-from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import padding
 
 message_len = 32  # TODO: figure out exactly what this value should be
 header_len = 8
