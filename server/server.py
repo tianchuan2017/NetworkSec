@@ -2,6 +2,7 @@ import sys
 import socket
 import struct
 import math
+import datetime
 import importlib
 
 # Import the ftp and ids modules
@@ -11,7 +12,6 @@ from ftp import ftp
 from ids import IDS
 
 def get_server_addr():
-
     # Retreive server ip address
     try:
         server_ip = socket.gethostbyname(socket.gethostname())
@@ -39,6 +39,10 @@ class ServerConnection():
     packet_len = message_len + header_len
 
     def __init__(self):
+        # Open log file
+        log_filename = "server.log"
+        self.log_file = open(log_filename, 'a')
+            
         # Get server address
         server_addr = get_server_addr()
 
@@ -55,18 +59,20 @@ class ServerConnection():
             # Accept connection
             self.conn, self.addr = self.s.accept()
             print("Connection from: " + str(self.addr))
+            self.log_event("Connection from: " + str(self.addr))
         except Exception as err:
             print("Error opening socket: " + str(err))
             sys.exit()
 
+    def log_event(self, event):
+        timestamp = str(datetime.datetime.now())
+        self.log_file.write(timestamp + "\t" + event + "\r\n")
 
     def get_message(self):
-
         # Initialize expected index at 0
         expected_idx = 0
         
         msg = b''
-        
         
         while True:
             # Receive packet 
@@ -103,8 +109,6 @@ class ServerConnection():
                 else:
                     # Error, a packet was dropped
                     print('Packet Dropped. Exiting...')
-                    print("byte_idx: " + str(byte_idx))
-                    print("expected_idx: " + str(expected_idx))
                     sys.exit(1) 
                     #TODO Handle a dropped packet
                     #TODO Handle dropped last packet
@@ -164,5 +168,7 @@ while True:
         # close all files/sockets
         conn.s.shutdown(socket.SHUT_WR)
         print("Disconnected from client at: " + str(conn.addr))
+        conn.log_event("Disconnected from client at: " + str(conn.addr))
         conn.s.close()
+        conn.log_file.close()
         sys.exit()
