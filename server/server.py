@@ -77,10 +77,9 @@ class ServerConnection():
             recv_buf = self.conn.recv(ServerConnection.packet_len)
         
             # Have the IDS inspect the packet
-            if ids.inspect_message(recv_buf):
-                # An intrusion was detecteed
-                print('Intrusion!')
-                sys.exit(1)  # TODO Handle an intrusion
+            ids_response = ids.inspect_message(recv_buf)
+            if ids_response is not None:
+                self.handle_intrusion(ids_response)
             else:
                 # Parse header
                 header = recv_buf[0:ServerConnection.header_len]
@@ -138,25 +137,39 @@ class ServerConnection():
             packet[ServerConnection.header_len:ServerConnection.header_len + len(data)] = data
 
             # Have the IDS inspect the packet
-            if ids.inspect_message(packet):
-                # An intrusion was detecteed
-                print('Intrusion!')
-                sys.exit(1)  # TODO Handle an intrusion
+            ids_response = ids.inspect_message(packet)
+            if ids_response is not None:
+                self.handle_intrusion(ids_response)
             else:
                 self.conn.send(packet)
 
-print('Starting Intrusion Detection System')
+    def handle_intrusion(self, ids_response):
+        # TODO Handle an intrusion
+        self.log_event('Intrusion from: {} Pattern ID: {}'.format(self.addr, ids_response))
+        print('!!!Intrusion Detected!!!')
+        self.close_connection()
+
+    def close_connection(self):
+        # Close all files/sockets
+        self.s.shutdown(socket.SHUT_WR)
+        print("Disconnected from client at: " + str(self.addr))
+        self.log_event("Disconnected from client at: " + str(self.addr))
+        self.s.close()
+        self.log_file.close()
+
+
+print('Intrusion Detection System Starting...')
 
 # Initialize an IDS
 ids = IDS()
-
-# Change to the files/ directory, where all files will be stored
-os.chdir('files/')
 
 print("FTP Server Starting...")
 
 # Initialize a socket connection
 conn = ServerConnection()
+
+# Change to the files/ directory, where all files will be stored
+os.chdir('files/')
 
 while True:
     # Receive command string
@@ -166,10 +179,6 @@ while True:
     ftp_exit_result = ftp(command, conn)
 
     if ftp_exit_result:
-        # close all files/sockets
-        conn.s.shutdown(socket.SHUT_WR)
-        print("Disconnected from client at: " + str(conn.addr))
-        conn.log_event("Disconnected from client at: " + str(conn.addr))
-        conn.s.close()
-        conn.log_file.close()
+        # Close and exit
+        conn.close_connection()
         sys.exit()

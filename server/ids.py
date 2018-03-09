@@ -46,11 +46,13 @@ class IDS:
     def inspect_message(self, message):
         # Check if each pattern is in the message
         for pattern_id, pattern in self.patterns.items():
-            if pattern in message:
-                print('!!!INTRUSION!!!')
-                return True  # TODO Implement log
 
-        return False
+            if pattern in message:
+                # If there was an intrusion return which pattern caused it
+                return pattern_id
+
+        # Return no intrusion detected
+        return None
 
     def add_pattern(self, pattern_id, pattern):
 

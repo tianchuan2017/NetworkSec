@@ -1,3 +1,7 @@
 *.pyc
 .idea/
 
+
+client/test.txt
+server/files/test.txt
+server/files/test.txt.hash
