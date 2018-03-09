@@ -153,7 +153,7 @@ while True:
         try:
             while True:
                 # Enter command
-                command = input("ftp>").split()
+                command = input("ftp> ").split()
 
                 try:
                     if command[0] == "put":
@@ -255,3 +255,5 @@ while True:
 
         except Exception as err:
             print("Error: Connection closed\n")
+            s.close()
+            sys.exit()
