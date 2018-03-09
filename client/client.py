@@ -13,7 +13,6 @@ packet_len = message_len + header_len
 
 print("FTP Client Starting...")
 
-
 def get_server_addr():
     # Parse server IP address
     while True:
@@ -105,7 +104,7 @@ def get_message(conn):
 
             else:
                 # Error, a packet was dropped
-                print('Packet Dropped. Exiting...')
+                raise ConnectionError('Packet Dropped. File not saved.')
                 sys.exit(1)  # TODO Handle a dropped packet
     except socket.timeout as err:
         raise Exception('Server not responding. Connection closed')
@@ -156,97 +155,103 @@ while True:
                 # Enter command
                 command = input("ftp>").split()
 
-                if command[0] == "put":
-                    # send file and hash to FTP server
-                    if len(command) == 2:
-                        # is the file valid?
-                        filename = command[1]
-                        if is_valid_file(filename):
-                            fp = open(filename, "rb")
+                try:
+                    if command[0] == "put":
+                        # send file and hash to FTP server
+                        if len(command) == 2:
+                            # is the file valid?
+                            filename = command[1]
+                            if is_valid_file(filename):
+                                fp = open(filename, "rb")
 
-                            # Load file
-                            plaintext = fp.read()
-                            p_len = len(plaintext)
-                            fp.close()
+                                # Load file
+                                plaintext = fp.read()
+                                p_len = len(plaintext)
+                                fp.close()
 
-                            # Generate Hash
-                            digest = hash_file(plaintext)
+                                # Generate Hash
+                                digest = hash_file(plaintext)
+
+                                # Send Command
+                                send_message(s, command[0].encode('ascii'))
+
+                                # Send Hash
+                                send_message(s, digest)
+
+                                # Send filename
+                                send_message(s, filename.encode('ascii'))
+
+                                # Send file
+                                send_message(s, plaintext)
+                        else:
+                            print("Error: Incomplete Command\nput [filename]")
+
+                    elif command[0] == "get":
+                        if len(command) == 2:
+                            # save/overwrite file+hash from FTP server
+                            filename = command[1]
 
                             # Send Command
                             send_message(s, command[0].encode('ascii'))
 
-                            # Send Hash
-                            send_message(s, digest)
-
                             # Send filename
                             send_message(s, filename.encode('ascii'))
 
-                            # Send file
-                            send_message(s, plaintext)
-                    else:
-                        print("Error: Incomplete Command\nput [filename]")
+                            has_file = int.from_bytes(get_message(s), byteorder='big')
+                            if has_file == 1:
+                                # Receive filename
+                                filename = get_message(s).decode('ascii')
+                                # Receive file
+                                data = get_message(s)
 
-                elif command[0] == "get":
-                    if len(command) == 2:
-                        # save/overwrite file+hash from FTP server
-                        filename = command[1]
+                                has_hash = int.from_bytes(get_message(s), byteorder='big')
+                                if has_hash == 1:
+                                    # Receive hash
+                                    server_digest = get_message(s)
+                                    # Run local hash
+                                    digest = hash_file(data)
+                                    # Verify file integrity
+                                    if server_digest == digest:
+                                        fout = open(filename, 'wb')
+                                        fout.write(data)
+                                        fout.close()
+                                    else:
+                                        print("Hash does not match!\nFile not saved.")
+                                else:
+                                    print("No hash available.\nFile not saved.")
+                            else:
+                                print("File unavailable on server")
+                        else:
+                            print("Error: Incomplete command.\nget [filename]")
 
-                        # Send Command
+                    elif command[0] == "ls":
+                        # send request for directory listing
                         send_message(s, command[0].encode('ascii'))
 
-                        # Send filename
-                        send_message(s, filename.encode('ascii'))
+                        # receive directory listing
+                        j_ls = get_message(s).decode('ascii')
+                        ls = json.loads(j_ls)
 
-                        has_file = int.from_bytes(get_message(s), byteorder='big')
-                        if has_file == 1:
-                            # Receive filename
-                            filename = get_message(s).decode('ascii')
-                            # Receive file
-                            data = get_message(s)
+                        # print listing
+                        for item in ls:
+                            print(item)
 
-                            has_hash = int.from_bytes(get_message(s), byteorder='big')
-                            if has_hash == 1:
-                                # Receive hash
-                                server_digest = get_message(s)
-                                # Run local hash
-                                digest = hash_file(data)
-                                # Verify file integrity
-                                if server_digest == digest:
-                                    fout = open(filename, 'wb')
-                                    fout.write(data)
-                                    fout.close()
-                                else:
-                                    print("Hash does not match!\nFile not saved.")
-                            else:
-                                print("No hash available.\nFile not saved.")
-                        else:
-                            print("File unavailable on server")
+                    elif command[0] == "exit":
+                        try:
+                            # Send Command
+                            send_message(s, command[0].encode('ascii'))
+                            s.shutdown(socket.SHUT_WR)
+                        except ConnectionError as err:
+                            print("Connection closed by server.")
+
+                        # close all files/sockets
+                        print("Disconnected from server at: " + str(server_addr))
+                        s.close()
+                        sys.exit()
                     else:
-                        print("Error: Incomplete command.\nget [filename]")
-
-                elif command[0] == "ls":
-                    # send request for directory listing
-                    send_message(s, command[0].encode('ascii'))
-
-                    # receive directory listing
-                    j_ls = get_message(s).decode('ascii')
-                    ls = json.loads(j_ls)
-
-                    # print listing
-                    for item in ls:
-                        print(item)
-
-                elif command[0] == "exit":
-                    # Send Command
-                    send_message(s, command[0].encode('ascii'))
-
-                    # close all files/sockets
-                    s.shutdown(socket.SHUT_WR)
-                    print("Disconnected from server at: " + str(server_addr))
-                    s.close()
-                    sys.exit()
-                else:
-                    print("Error: invalid command\nAvailable commands are: put, get, ls, exit")
+                        print("Error: invalid command\nAvailable commands are: put, get, ls, exit")
+                except ConnectionError as err:
+                    print("Connection Error: " + str(err))
 
         except Exception as err:
             print("Error: Connection closed\n")
