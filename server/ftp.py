@@ -33,10 +33,6 @@ def ftp(command, conn):
 
         conn.log_event("Received request: [" + command.decode('ascii') + " " + filename + "] from " + str(conn.addr))
 
-        # Encrypt hash
-        # digest_token = f.encrypt(digest)
-        digest_token = digest
-
         # Write file                                                                                                                                                                                                                                   to disk
         fout = open(filename, 'wb')
         fout.write(plaintext)
@@ -44,7 +40,7 @@ def ftp(command, conn):
 
         # Write hash to disk
         fout = open((filename + ".hash"), 'wb')
-        fout.write(digest_token)
+        fout.write(digest)
         fout.close()
 
         print("Plaintext written to: " + filename)
@@ -84,18 +80,8 @@ def ftp(command, conn):
             if is_valid_file(filename + ".hash"):
                 has_hash = 1
                 fp = open((filename + ".hash"), "rb")
-                digest_token = fp.read()
+                digest = fp.read()
                 fp.close()
-
-                # try-except used in case we want to encrypt the file hashes
-                try:
-                    # digest = f.decrypt(digest_token)
-                    digest = digest_token
-                    has_hash = 1
-                except Exception as err:
-                    print("Error: Could not decrypt hash: " + str(err))
-                    conn.log_event("Error: Could not decrypt hash: " + str(err))
-                    has_hash = 0
 
             # Send has_hash
             conn.send_message(bytes([has_hash]))
@@ -128,6 +114,6 @@ def ftp(command, conn):
         should_exit = True
 
     else:
-        print("Error: Invalid command\nAvailable commands are: put, get, ls, exit")
+        print("Error: Invalid command: " + command.decode('ascii'))
 
     return should_exit
