@@ -150,7 +150,8 @@ class ServerConnection():
         self.log_event('Intrusion from: {} Pattern ID: {}'.format(self.addr, ids_response))
         print('!!!Intrusion Detected!!!')
         self.close_connection()
-        sys.exit(1)
+
+        raise RuntimeError('Intrusion Detected.')
 
     def close_connection(self):
         # Close all files/sockets
@@ -168,17 +169,24 @@ ids = IDS()
 
 print("FTP Server Starting...")
 
-# Initialize a socket connection
-conn = ServerConnection()
-
 while True:
-    # Receive command string
-    command = conn.get_message()
+    # Initialize a socket connection
+    conn = ServerConnection()
 
-    # Send the command to the ftp protocol
-    ftp_exit_result = ftp(command, conn)
+    try:
+        while True:
+                # Receive command string
+                command = conn.get_message()
 
-    if ftp_exit_result:
-        # Close and exit
-        conn.close_connection()
-        sys.exit()
+                # Send the command to the ftp protocol
+                ftp_exit_result = ftp(command, conn)
+
+                if ftp_exit_result:
+                    # Close and exit
+                    conn.close_connection()
+                    sys.exit()
+
+    except RuntimeError:
+        # Assuming an intrusion, the socket will already be closed, so this just breaks the loop
+        print('Listening for new connection.')
+
