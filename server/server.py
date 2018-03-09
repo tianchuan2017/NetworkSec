@@ -39,7 +39,7 @@ class ServerConnection():
     def __init__(self):
         # Open log file
         log_filename = "server.log"
-        self.log_file = open(log_filename, 'a')
+        self.log_file = open('data/' + log_filename, 'a')
             
         # Get server address
         server_addr = get_server_addr()
@@ -170,9 +170,6 @@ print("FTP Server Starting...")
 
 # Initialize a socket connection
 conn = ServerConnection()
-
-# Change to the files/ directory, where all files will be stored
-os.chdir('files/')
 
 while True:
     # Receive command string

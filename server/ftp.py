@@ -1,11 +1,11 @@
 import os
 import json
 
-def is_valid_file(filename):
+def is_valid_file(filename, path_prefix=''):
     if "/" in filename or "\\" in filename:
         print("Error: Filename cannot be a path")
         return False
-    elif not os.path.isfile(filename):
+    elif not os.path.isfile(path_prefix + filename):
         print("Error: " + filename + " does not exist")
         return False
     # Ubuntu max filename length = 255 bytes
@@ -34,19 +34,19 @@ def ftp(command, conn):
         conn.log_event("Received request: [" + command.decode('ascii') + " " + filename + "] from " + str(conn.addr))
 
         # Write file                                                                                                                                                                                                                                   to disk
-        fout = open(filename, 'wb')
+        fout = open("files/" + filename, 'wb')
         fout.write(plaintext)
         fout.close()
 
         # Write hash to disk
-        fout = open((filename + ".hash"), 'wb')
+        fout = open(('data/' + filename + ".hash"), 'wb')
         fout.write(digest)
         fout.close()
 
-        print("Plaintext written to: " + filename)
-        conn.log_event("Plaintext written to: " + filename)
-        print("Hash written to: " + filename + ".hash")
-        conn.log_event("Hash written to: " + filename + ".hash")
+        print("Plaintext written to: files/" + filename)
+        conn.log_event("Plaintext written to: files/" + filename)
+        print("Hash written to: data/" + filename + ".hash")
+        conn.log_event("Hash written to: data/" + filename + ".hash")
 
     elif command == b"get":
         # Get filename from client
@@ -56,14 +56,14 @@ def ftp(command, conn):
 
         # Check if the file is available
         has_file = 0
-        if is_valid_file(filename):
+        if is_valid_file(filename, path_prefix='files/'):
             has_file = 1
 
             # Let the client know the file is available
             conn.send_message(bytes([has_file]))
 
             # Open and load the file
-            fp = open(filename, "rb")
+            fp = open("files/" + filename, "rb")
             plaintext = fp.read()
             fp.close()
 
@@ -72,14 +72,14 @@ def ftp(command, conn):
 
             # Send file
             conn.send_message(plaintext)
-            print("Sent file: " + filename)
-            conn.log_event("Sent file: " + filename)
+            print("Sent file: files/" + filename)
+            conn.log_event("Sent file: files/" + filename)
 
             # Check is hash is available
             has_hash = 0
-            if is_valid_file(filename + ".hash"):
+            if is_valid_file(filename + ".hash", path_prefix='data/'):
                 has_hash = 1
-                fp = open((filename + ".hash"), "rb")
+                fp = open(('data/' + filename + ".hash"), "rb")
                 digest = fp.read()
                 fp.close()
 
@@ -89,19 +89,19 @@ def ftp(command, conn):
             if has_hash == 1:
                 # Send hash
                 conn.send_message(digest)
-                print("Sent hash: " + (filename + ".hash"))
-                conn.log_event("Sent hash: " + (filename + ".hash"))
+                print("Sent hash: " + ('data/' + filename + ".hash"))
+                conn.log_event("Sent hash: " + ('data/' + filename + ".hash"))
             else:
                 print("No hash sent")
                 conn.log_event("No hash sent")
         else:
             # Let the client know the file is unavailable
             conn.send_message(bytes([has_file]))
-            conn.log_event(filename + " is unavailable")
+            conn.log_event("files/" + filename + " is unavailable")
 
     elif command == b"ls":
         # retreive directory listing
-        ls = os.listdir()
+        ls = os.listdir('files/')
         j_ls = json.dumps(ls).encode('ascii')
 
         conn.log_event("Received request: [" + command.decode('ascii') + "] from " + str(conn.addr))
