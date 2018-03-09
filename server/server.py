@@ -32,7 +32,7 @@ def get_server_addr():
 
 class ServerConnection():
 
-    message_len = 32  # TODO: figure out exactly what this value should be
+    message_len = 1016  # TODO: figure out exactly what this value should be
     header_len = 8
     packet_len = message_len + header_len
 
