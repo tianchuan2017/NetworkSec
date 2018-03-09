@@ -6,7 +6,7 @@ import sys
 class IDS:
     def __init__(self):
 
-        self.pattern_filename = 'intrusion_patterns.dat'
+        self.pattern_filename = 'data/intrusion_patterns.dat'
 
         self.patterns = self.load_patterns()
 

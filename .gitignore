@@ -3,5 +3,6 @@
 
 
 client/test.txt
-server/files/test.txt
-server/files/test.txt.hash
+server/files/
+server/data/*
+server/data/
