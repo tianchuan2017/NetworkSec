@@ -79,6 +79,7 @@ class ServerConnection():
             # Have the IDS inspect the packet
             ids_response = ids.inspect_message(recv_buf)
             if ids_response is not None:
+                # An intrusion was detected. Handle it.
                 self.handle_intrusion(ids_response)
             else:
                 # Parse header
@@ -139,6 +140,7 @@ class ServerConnection():
             # Have the IDS inspect the packet
             ids_response = ids.inspect_message(packet)
             if ids_response is not None:
+                # An intrusion was detected. Handle it.
                 self.handle_intrusion(ids_response)
             else:
                 self.conn.send(packet)
@@ -148,6 +150,7 @@ class ServerConnection():
         self.log_event('Intrusion from: {} Pattern ID: {}'.format(self.addr, ids_response))
         print('!!!Intrusion Detected!!!')
         self.close_connection()
+        sys.exit(1)
 
     def close_connection(self):
         # Close all files/sockets
