@@ -1,1 +1,57 @@
-log
+2018-03-08 21:22:32.371262	Connection from: ('127.0.0.1', 59182)
+2018-03-08 21:22:38.373838	Received request: [put test.txt] from ('127.0.0.1', 59182)
+2018-03-08 21:22:38.374137	Plaintext written to: files/test.txt
+2018-03-08 21:22:38.374151	Hash written to: data/test.txt.hash
+2018-03-08 21:23:38.758812	Connection from: ('127.0.0.1', 59184)
+2018-03-08 21:23:43.862421	Intrusion from: ('127.0.0.1', 59184) Pattern ID: 
+2018-03-08 21:23:43.862480	Disconnected from client at: ('127.0.0.1', 59184)
+2018-03-08 21:28:12.616919	Connection from: ('127.0.0.1', 59186)
+2018-03-08 21:28:19.594689	Intrusion from: ('127.0.0.1', 59186) Pattern ID: 
+2018-03-08 21:28:19.594733	Disconnected from client at: ('127.0.0.1', 59186)
+2018-03-08 21:30:31.259027	Connection from: ('127.0.0.1', 59188)
+2018-03-08 21:30:35.087562	Intrusion from: ('127.0.0.1', 59188) Pattern ID: 
+2018-03-08 21:30:35.087607	Disconnected from client at: ('127.0.0.1', 59188)
+2018-03-08 21:32:17.591961	Connection from: ('127.0.0.1', 59190)
+2018-03-08 21:32:19.784560	Intrusion from: ('127.0.0.1', 59190) Pattern ID: 
+2018-03-08 21:32:19.784630	Disconnected from client at: ('127.0.0.1', 59190)
+2018-03-08 21:34:14.454091	Connection from: ('127.0.0.1', 59192)
+2018-03-08 21:34:23.339398	Received request: [put test.txt] from ('127.0.0.1', 59192)
+2018-03-08 21:34:23.339786	Plaintext written to: files/test.txt
+2018-03-08 21:34:23.339819	Hash written to: data/test.txt.hash
+2018-03-08 21:34:24.503200	Received request: [ls] from ('127.0.0.1', 59192)
+2018-03-08 21:34:28.172546	Received request: [get test.txt] from ('127.0.0.1', 59192)
+2018-03-08 21:34:28.173100	Sent file: files/test.txt
+2018-03-08 21:34:28.173238	Sent hash: data/test.txt.hash
+2018-03-08 21:34:37.154446	Intrusion from: ('127.0.0.1', 59192) Pattern ID: a
+2018-03-08 21:34:37.154512	Disconnected from client at: ('127.0.0.1', 59192)
+2018-03-08 21:43:24.673400	Connection from: ('127.0.0.1', 59256)
+2018-03-08 21:44:34.415877	Intrusion from: ('127.0.0.1', 59256) Pattern ID: a
+2018-03-08 21:44:34.415942	Disconnected from client at: ('127.0.0.1', 59256)
+2018-03-08 21:46:45.842687	Connection from: ('127.0.0.1', 59262)
+2018-03-08 21:46:53.909721	Received request: [put test.txt] from ('127.0.0.1', 59262)
+2018-03-08 21:46:53.910373	Plaintext written to: files/test.txt
+2018-03-08 21:46:53.910388	Hash written to: data/test.txt.hash
+2018-03-08 21:46:57.615668	Intrusion from: ('127.0.0.1', 59262) Pattern ID: a
+2018-03-08 21:46:57.615729	Disconnected from client at: ('127.0.0.1', 59262)
+2018-03-08 21:47:33.619129	Connection from: ('127.0.0.1', 59264)
+2018-03-08 21:47:45.209731	Received request: [put test.txt] from ('127.0.0.1', 59264)
+2018-03-08 21:47:45.210137	Plaintext written to: files/test.txt
+2018-03-08 21:47:45.210177	Hash written to: data/test.txt.hash
+2018-03-08 21:47:49.858020	Received request: [get test.txt] from ('127.0.0.1', 59264)
+2018-03-08 21:47:49.858573	Sent file: files/test.txt
+2018-03-08 21:47:49.858772	Sent hash: data/test.txt.hash
+2018-03-08 21:47:51.433469	Received request: [ls] from ('127.0.0.1', 59264)
+2018-03-08 21:48:16.089838	Connection from: ('127.0.0.1', 59266)
+2018-03-08 21:49:04.239280	Received request: [ls] from ('127.0.0.1', 59266)
+2018-04-12 21:20:40.634376	Connection from: ('127.0.0.1', 48576)
+2018-04-12 21:20:47.659873	Received request: [ls] from ('127.0.0.1', 48576)
+2018-04-12 21:20:54.378382	Received request: [put test.txt] from ('127.0.0.1', 48576)
+2018-04-12 21:20:54.378671	Plaintext written to: files/test.txt
+2018-04-12 21:20:54.378710	Hash written to: data/test.txt.hash
+2018-04-12 22:33:57.226134	Connection from: ('127.0.0.1', 48700)
+2018-04-12 22:34:00.998318	Received request: [put test.txt] from ('127.0.0.1', 48700)
+2018-04-12 22:34:00.998681	Plaintext written to: files/test.txt
+2018-04-12 22:34:00.998787	Hash written to: data/test.txt.hash
+2018-04-12 22:34:07.663662	Received request: [get test.txt] from ('127.0.0.1', 48700)
+2018-04-12 22:34:07.664222	Sent file: files/test.txt
+2018-04-12 22:34:07.664388	Sent hash: data/test.txt.hash

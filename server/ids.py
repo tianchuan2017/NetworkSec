@@ -8,8 +8,15 @@ class IDS:
 
         self.pattern_filename = 'data/intrusion_patterns.dat'
 
-        self.patterns = self.load_patterns()
-
+        try:
+                self.patterns = self.load_patterns()
+        except Exception:
+                sys.stderr.write('Unable to load pattern file. Possibly corrupted. Creating new pattern file.' +  self.pattern_filename)
+		
+                # Initialize a new pattern file and save it
+                self.patterns = {}
+                pickle.dump(self.patterns, open(self.pattern_filename, 'wb'))
+		
         cmd = 'a'
 
         while cmd != '':
@@ -19,10 +26,17 @@ class IDS:
             if cmd == 'a':
 
                 # Read in a new pattern id, pattern
-                pattern_id = input('Enter pattern id (int or str): ')
-
+                pattern_id = None
+                while(pattern_id is None or pattern_id == ''):
+                    pattern_id = input('Enter non-empty pattern id (int or str):')
+                    if pattern_id == '' or pattern_id is None:
+                       print('Cannot have empty pattern id\n')
                 try:
                     byte_pattern = bytes.fromhex(input('Enter pattern in hex: (ex. efefefef...): '))
+                    if len(byte_pattern) <= 0:
+                       sys.stderr.write('Bad input. Patterns cannot be empty.\n')
+                       continue
+
                 except ValueError:
                     sys.stderr.write('Bad input. Are you sure you entered valid hex?\n')
                     continue
