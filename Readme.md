@@ -7,6 +7,6 @@ adc2181
 ct2698
 mag2293
 
-# TODO
+# Fixed
 
-* Error testing - make sure crashes are handled nicely.
+Most errors in feedback`
